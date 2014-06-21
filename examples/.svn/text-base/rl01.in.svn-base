@@ -1,0 +1,27 @@
+#
+#	u¿yj:
+#	$electra -f rl01.bench -we rl01.in
+#
+#	jest to równowa¿ne wywo³aniu:
+#	$electra -f rl01.bench -we "1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+#
+#      x0
+	1
+	1
+	0
+	1
+	1
+	1
+	1
+	1
+	1
+	1
+	1
+	1
+	1
+	1
+	1
+	1
+	1
+	1
+	1	

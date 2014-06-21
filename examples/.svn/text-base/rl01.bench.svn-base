@@ -1,0 +1,27 @@
+#!/usr/local/bin/electra -f
+#
+#	rejestr liniowy ze sprzê¿eniem wewnêtrznym
+#
+#      +----------+----------------+----------+--------------------------+ 
+#      |          |                |          |                          | 
+#      v          v                v          v                          |
+# x0->xor->|Q0|->xor->|Q1|->|Q2|->xor->|Q3|->xor->|Q4|->|Q5|->|Q6|->|Q7|-+
+#             
+
+
+INPUT(X0)
+OUTPUT(Q0,Q1,Q2,Q3,Q4,Q5,Q6,Q7)
+
+G0=XOR(X0,Q7)
+Q0=DFF(G0)
+G1=XOR(Q7,Q0)
+Q1=DFF(G1)
+Q2=DFF(Q1)
+G2=XOR(Q7,Q2)
+Q3=DFF(G2)
+G3=XOR(Q7,Q3)
+Q4=DFF(G3)
+Q5=DFF(Q4)
+Q6=DFF(Q5)
+Q7=DFF(Q6)
+

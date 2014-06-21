@@ -1,0 +1,606 @@
+/*
+ * elecra  - symulator uk³adów cyfrowych.
+ * Copyright (C) 2003/2005 £ukasz Bacik
+ *
+ * Niniejszy program jest wolnym oprogramowaniem; mo¿esz go 
+ * rozprowadzaæ dalej i/lub modyfikowaæ na warunkach Powszechnej
+ * Licencji Publicznej GNU, wydanej przez Fundacjê Wolnego
+ * Oprogramowania - wed³ug wersji 2-giej tej Licencji lub której¶
+ * z pó¼niejszych wersji. 
+ *
+ * Niniejszy program rozpowszechniany jest z nadziej±, i¿ bêdzie on 
+ * u¿yteczny - jednak BEZ JAKIEJKOLWIEK GWARANCJI, nawet domy¶lnej 
+ * gwarancji PRZYDATNO¦CI HANDLOWEJ albo PRZYDATNO¦CI DO OKRE¦LONYCH 
+ * ZASTOSOWAÑ. W celu uzyskania bli¿szych informacji - Powszechna 
+ * Licencja Publiczna GNU. 
+ *
+ * Z pewno¶ci± wraz z niniejszym programem otrzyma³e¶ te¿ egzemplarz 
+ * Powszechnej Licencji Publicznej GNU (GNU General Public License);
+ * je¶li nie - napisz do Free Software Foundation, Inc., 675 Mass Ave,
+ * Cambridge, MA 02139, USA.
+ *
+ */
+
+/*
+ * electra - digital circuits simulator.
+ * Copyright (C) 2003/2005 £ukasz Bacik
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ *
+ */
+ 
+ 
+/*
+ *
+ *				electra	
+ *
+ *			symulator uk³adów cyfrowych
+ *
+ *					     	  £ukasz Bacik
+ *	  			   	   (    lukasz.bacik@wp.pl    )
+ *	 
+ *	strona domowa projektu: 
+ *			
+ *			-[FIXME]- http://luka.org.pl/electra     
+ *			-[FIXME]- http://www.electra.webpark.pl
+ *
+ *	
+ *	
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
+/*
+ *
+ * wersja:
+ * 
+ *	0.0.1 		- start!
+ *	0.0.1-9 	- czyszczenie kodu, do¶æ mocna przeróbka parsera
+ *			  jouc.
+ *	0.0.1-91	- jouc: - wypada neg, wchodzi not
+ *				- mo¿na podawaæ wielekrotnie ten sam id w join
+ *				- ( join pod³±cza teraz kolejne wolne wyj¶cia
+ *				    el. src. )
+ *				- dmg definiuje teraz uk³ad na którego WYJ¦CIU
+ *				  jest uszkodzenie
+ *
+ *	0.1-99		- czyszczenie, czyszczenie, czyszczenie...
+ *			- pierwsze kroki do DOK£ADNEGO oddzielenia 
+ *			  motoru, interfejsu i parsera
+ *
+ *	0.2		- pe³na wersja dla uk³adów kombinacyjnych
+ *			 wyposa¿ona w parser ISCAS89.
+ *
+ *	0.2-5		- podzia³ na biblioteki, usuniêcie b³êdów, 
+ *			  czyszczenie kodu. Dochodzi równie¿ mo¿liwo¶æ
+ *			  definiowania stanów pocz±tkowych przerzutników
+ *			  i "liczenia" uk³adu wg zadanej liczby taktów.
+ *
+ *	0.2-5r2		- modyfikacja klasy puklad
+ *			  doda³em flagê f_dff oraz metody flag_dff
+ *			  i set_dff - wszystko an potrzeby "multiuk³adowej"
+ *			  electry ( choæ sam interfejs jeszcze tego nie 
+ *			  wspiera )
+ 
+ *	0.2-5r3		- minimalna poprawka metody uklad::makeLine,
+ *			  mój b³±d który powodowa³ zwis kompilatora VC++.
+ *			  
+ *	0.2-5r4		- poprawki w metodach klasy przerzutnika D
+ *			  poprawienie b³êdu w metodzie przelicz
+ */
+
+const char __VER__[] = "0.2-5r4";
+
+#include<ctype.h>
+#include<stdio.h>
+#include<stdarg.h>
+// 
+//#include<iostream.h>
+//#include<fstream.h> 
+#include<iostream>
+#include<fstream> 
+#include<string.h>
+#include<stdlib.h>
+#include<inttypes.h>
+
+using namespace std;
+
+#include "share/temlista.h"
+#include "share/lfunc.h"
+#include "share/bufor.h"
+#include "ReadIn/readin.h"
+
+#include "libelectra/types.h"
+
+#include "parser/parsery.h"
+
+#include "libelectra/electra/uklad.h"
+#include "libelectra/electra/elements.h"
+#include "libelectra/electra/ukdbg.h"
+#include "libelectra/electra/puklad.h"
+
+#include "libelectra/MakeCUT.h"
+#include "libelectra/proapi.h"
+
+#include "argIn/analiza_arg.h"
+#include "debug/debug.h"
+
+const int ERR_neMEM		=	132;
+
+const int ERR_analizaArg	= 	10;
+const int ERR_analizaI89	=	11;
+const int ERR_MakeCUT		=	12;
+const int ERR_analizaI89D	=	13;
+const int ERR_analizaIn		=	14;
+
+
+/*
+ *
+ * funkcja przelicza symulowany uk³ad cyfrowy
+ * 
+ *	pUklad  - wska¼nik na uk³ad
+ *	plWe	- wska¼nik na listê warto¶ci podawanych na wej¶cia
+ *	          uk³adu
+ *	dmg	- wska¼nik na strukturê opisuj±c± uszkodzenie uk³adu
+ *	
+ *	ustawienia - struktura zawieraj±ca dodatkowe informacje
+ *
+ */
+void licz_uklad0( PUklad *pUklad, TLista<char*> *plWe, TDmg *dmg, 
+		  TUstawienia ustawienia )
+{
+	TElement<char*> *elWe = plWe->first();
+	TElement<TPPS*> *eldff = NULL;
+	char *wy;
+	int dbg = 0, clk = 0;
+
+	if( ustawienia.d4 == 1 ) dbg = dbg + CUT_FDB_Pro;
+	if( ustawienia.d5 == 1 ) dbg = dbg + CUT_FDB_Fal;
+
+	if( ustawienia.pr_reset == 1 ) cout << "-- Reset uk³adu --" << endl;
+	pUklad->reset();
+
+
+		
+	// ustawienie stanów pocz±tkowych przerzutników
+	// ( o ile jakie¶ s± )
+	if( ustawienia.set_dff != NULL )
+
+		uklad_set_dff( pUklad, ustawienia.set_dff );
+
+	if( ustawienia.pr_dff == 1 ) {
+	//cout << "out: " << ustawienia.set_dff << endl;
+
+		wy = (char*)malloc(( pUklad->Wy()->ilosc()+1 )
+			* sizeof(char));
+		pUklad->ustawWy();
+		pUklad->pobierzWy( wy );
+		cout << "out: " << wy; //<< endl;
+		free( wy );
+		wy = NULL;
+
+		if(( eldff = pUklad->el_dff()->first()) != NULL ) {
+		
+			cout << " dff: ";
+			
+			while( eldff != NULL ) {
+
+				cout << eldff->wsk()->Wy()->first()->war();
+				eldff = eldff->nast();
+			}	
+		}
+		cout << endl;
+	}
+
+	/*
+	 * Warunek pêtli g³ównej nie jest chyba za dobry...
+	 *							[FIXME]
+	 */
+	
+	clk = ustawienia.clk;
+	while(( elWe != NULL ) || ( clk-- > 0 )) {
+
+		// je¿eli s± jakie¶ wej¶cia
+		if( elWe != NULL ) {
+			
+			cout << "in: " << elWe->wsk() << " ";// << endl; 
+			wy = przelicz( pUklad, elWe->wsk(), dbg );
+	
+		} else 	wy = przelicz( pUklad, NULL, dbg );
+		 
+		cout << "out: " << wy;
+	
+		// je¿eli s± jakie¶ przerzutniki
+		//
+		// [FIXME] Poniewa¿ poni¿szy warunek jest ju¿ wykorzystany raz powy¿ej
+		// - przy wypisywaniu stanów pocz±tkowych ( opcja --pr_dff ) mo¿e
+		// nale¿a³o by ten kawa³ek kodu zamieniæ na funkcjê ? :)
+		// 
+		// Ogólnie - mo¿na upro¶ciæ odwo³ania do warto¶ci na listach we/wy/dff
+		// poprzez u¿ycie funkcji pobieraj±cej nazwê listy jako parametr i 
+		// zwracaj±cej ci±g warto¶ci ( czyli np.: "0011101" )
+		
+		if(( eldff = pUklad->el_dff()->first()) != NULL ) {
+		
+			cout << " dff: ";
+			
+			while( eldff != NULL ) {
+
+				cout << eldff->wsk()->Wy()->first()->war();
+				eldff = eldff->nast();
+			}	
+		}
+		
+		// je¿eli uk³ad jest uszkodzony
+		if( dmg != NULL ) {
+
+			cout << "\t(" << dmg->id;
+			if( dmg->id_des != NULL )
+				cout << "->" << dmg->id_des;
+			cout << " /" << dmg->war << ")";
+		}
+		cout << endl;
+		
+		free( wy );			
+		if( elWe != NULL ) elWe = elWe->nast();
+	}
+}
+
+
+/*
+ * Przeliczanie uk³adu ( wy¿szy stopieñ abstrakcji )
+ *
+ *	pUklad 	- wska¼nik na uk³ad
+ *	plDmg	- wska¼nik na listê uszkodzeñ
+ *	plWe	- wska¼nik na listê warto¶ci wej¶ciowych
+ *
+ *	ustawienia - informacje dodatkowe
+ * 	
+ */
+
+void licz_uklad( PUklad *pUklad, TLista<TDmg*> *pLDmg, 
+		 TLista<char*> *plWe, TUstawienia ustawienia  )
+{
+	TElement<TDmg*> *elDmg = NULL;
+
+	licz_uklad0( pUklad, plWe, NULL, ustawienia );
+
+	/*
+	 * Je¿eli zdefiniowane zosta³y uszkodzenia uk³adu to
+	 * uruchomiona zostaje pêtla dla ich przeliczenia
+	 *
+	 */
+	if( pLDmg != NULL ) elDmg = pLDmg->first();
+	while( elDmg != NULL ) {
+		
+		// najpierw uszkod¼ uk³ad
+		uklad_uszkodzenie( pUklad, elDmg->wsk());
+		// teraz przelicz
+		licz_uklad0( pUklad, plWe, elDmg->wsk(), ustawienia );
+		// na koñcu napraw
+		uklad_napraw( pUklad, elDmg->wsk());
+		// nastêpne uszkodzenie
+		elDmg = elDmg->nast();
+	}
+}
+
+
+/*
+ * MAIN
+ * 
+ * Program dzia³a w sumie na zasadzie "³±cznika" pomiêdzy bibliotekami
+ * parsery i libelectra. Dodatkowo biblioteka parsery wykorzystuje 
+ * bibliotekê readin do odczytywania plików. Tak wiêc readin + parsery
+ * pozwalaj± na wype³nienie struktur danych wymaganych przez libelectra
+ * ( i to jest pierwsz± czê¶ci± kodu funkcji main ). Czê¶æ druga ( bardzo
+ * skromna ) to procedury licz_uklad i licz_uklad0 - czyl praca symulowanego
+ * uk³adu cyfrowego. W czê¶ci trzeciej zawarta zosta³a obs³uga wyj±tków.
+ *
+ *
+ * 
+ * Opisy wiêkszo¶ci funkcji znajduj± siê w bibliotekach w których 
+ * te funkcje zosta³y zdefiniowane ( lub w plikach nag³ówkowych tych
+ * bibliotek ).
+ * 
+ */
+
+int main( int argc, char* argv[] )
+{
+	char *wy, errch[80], *tmp;
+	int err=0, i;
+
+	TUstawienia ustawienia; // parametry linii poleceñ
+	
+	PUklad *pUklad = NULL;  // symulowany uk³ad
+
+	// struktury wype³niane poprzez funkcje analizuj±ce biblioteki
+	// parsery i wymagane przez bibliotekê lib electra.
+	TLista<StDefEl*> *listaDefEl = NULL;
+	TLista<TDmg*> *listaDmg = NULL;
+	TLista<char*> *listaWe = NULL;
+	
+	try {
+	
+		// Odczytanie linii poleceñ i wype³nienie
+		// struktury ustawienia
+		if( err = analizuj_arg( argc, argv, ustawienia ))
+
+			throw ERR_analizaArg;
+		
+		// dbg
+		if( ustawienia.d1 ) dbg_komunikaty_ustawienia( ustawienia );
+
+		// przygotowanie struktury dla parsera ISCAS89
+		if(( listaDefEl = new TLista<StDefEl*>( FE_wywolajDestWsk ))
+					== NULL ) 
+			throw ERR_neMEM;
+
+		cout << "Czytanie definicji uk³adu...";
+		if(( err = readin( 1,
+					   ustawienia.dlbuf, 
+					   ustawienia.dlbufln, 
+					   ustawienia.plikWe,
+					   listaDefEl,
+					   &analizaISCAS89 )) != 0 )
+
+			throw ERR_analizaI89;		
+		
+		cout << "OK" << endl;
+		 
+		// dbg ( funkcja zdefiniowana w bibliotece "parsery" )
+		if ( ustawienia.d6 ) dbg_wypiszLEl( listaDefEl );
+		
+		cout << "Tworzenie uk³adu...";
+
+		if(( pUklad = new PUklad( "scheme" )) == NULL )
+
+			throw ERR_neMEM;
+		
+		if(( err = MakeCUT( listaDefEl, pUklad )) != 0 )
+
+			throw ERR_MakeCUT;
+
+			
+		cout << "OK" << endl;
+
+		// dbg ( funkcja zdefiniowana w bibliotece "libelectra" )
+		if( ustawienia.d2 ) dbg_wypiszElementy2( pUklad );
+		
+		if( ustawienia.plikDmg != NULL ) {
+
+			cout << "Czytam plik uszkodzeñ...";
+	
+			if(( listaDmg = new TLista<TDmg*>( FE_wywolajDestWsk ))
+						== NULL ) 
+				throw ERR_neMEM;
+
+			// Dodane aby moc czytac dmg z stdin	
+			if( !strcmp( ustawienia.plikDmg, "-" )) {
+                  	
+				i = 1; 
+                  		ustawienia.plikDmg = NULL;
+            		
+			} else  i = 0;
+
+            		// UWAGA na i  :)
+			if(( err = readin( i,
+						   ustawienia.dlbuf,
+						   ustawienia.dlbufln,
+						   ustawienia.plikDmg,
+						   listaDmg,
+						   &analizaISCAS89Dmg )) != 0 )
+
+				throw ERR_analizaI89D;
+			
+			cout << "OK" << endl;
+
+			if( ustawienia.d3 ) {
+			
+				cout << "Uszkodzenia: " << endl;
+
+				// dbg - biblioteka "parsery"
+				dbg_wypiszLDmg( listaDmg );
+
+			}
+
+		}
+
+		cout << "Czytam stany wej¶ciowe...";
+
+		if(( listaWe = new TLista<char*> ) == NULL ) 
+			
+			throw ERR_neMEM;
+
+		if( ustawienia.we == NULL ) {
+		
+		    // UWAGA zmiana na '1' dla czytania we z stdin
+		    
+		        if(( ustawienia.plikSig != NULL ) 
+				&& !strcmp( ustawienia.plikSig, "-" )) {
+
+				i = 1;
+				ustawienia.plikSig = NULL;
+			
+			} else  i = 0;
+		    
+		    
+			if(( err = readin( i,
+						   ustawienia.dlbuf,
+						   ustawienia.dlbufln,
+						   ustawienia.plikSig,
+						   listaWe,
+						   &analizaInSig )) != 0 )
+				throw ERR_analizaIn;
+		} else {
+
+			for( i=0; i < strlen( ustawienia.we ); i++ )
+				if( ustawienia.we[i] == ' ' )
+					ustawienia.we[i] = '\n';
+
+		/*
+		 *
+		 *	Zamieniæ na funkcjê w readin ? 		[FIXME]
+		 *
+		 */
+			
+			TBufor *buf = new TBufor( ustawienia.dlbuf );
+			TBufor *bufln = new TBufor( ustawienia.dlbufln );
+			
+			strcpy( buf->pocz, ustawienia.we );
+			buf->wsk_put = buf->pocz + strlen( ustawienia.we );
+			buf->putch('\n');
+			
+			if(( err = ladujbufln( buf, bufln, listaWe, 
+					       &analizaInSig )) != 0 ) {
+			
+				strcpy( errch, 
+					"Niew³a¶ciwa warto¶æ wej¶ciowa.");
+				
+				throw (char*)errch;
+			}
+		/*
+		 *	================================================
+		 *
+		 */
+
+		}
+
+		cout << "OK" << endl;
+
+		// dbg - biblioteka "parsery"
+		if( ustawienia.d7 ) dbg_wypiszLWe( listaWe );	
+
+
+		
+		/* --------------------------------------------- */
+
+		cout << "Przeliczanie uk³adu:" << endl;
+		
+		/*
+		 *   Wszystkie dane ju¿ pobrane i "obrobione",
+		 *   czas uruchomiæ machinê...
+		 */
+		
+		licz_uklad( pUklad, listaDmg, listaWe, ustawienia );
+
+		/* --------------------------------------------- */
+				
+	}
+
+	/*
+	 *	Obs³uga wyj±tków
+	 */
+	
+	catch( char *komunikat ) {
+
+		cerr << "*** ERROR ";
+		//if( komunikat != NULL ) 
+		cerr << komunikat;
+		//else cerr << "Nieznany b³±d lub brak pamiêci.";
+		cerr << endl;
+		err = 1;
+	}
+	
+	catch( int __ERROR__ ) { 
+		
+		cout << "*** ERROR: ";
+		
+		switch( __ERROR__ ) {
+
+			case ERR_analizaArg:
+
+				cout << "[analizaArg]:" << err << " : ";
+				cout << analiza_arg_err( err ) << endl;
+
+				break;
+
+			case ERR_analizaI89: 
+
+				if( err != 1 ) {
+
+					cout << "[ReadIn]:" << err << " : ";
+					cout << readin_err( err ) << endl;
+
+				} else {
+
+					cout << "[analizaI89]:" << err << " : ";
+					cout << analizaISCAS89_err( 
+							err_analiza() );
+					cout << endl;
+					cout << "linia: " << I89_nrLinii();
+					cout << endl;
+				}
+
+				break;
+				
+			case ERR_analizaI89D:
+
+				if( err != 1 ) {
+
+					cout << "[ReadIn]:" << err << " : ";
+					cout << readin_err( err ) << endl;
+
+				} else {
+
+					cout << "[analizaI89D]:" 
+					     << err << " : ";
+					cout << analizaISCAS89Dmg_err( 
+							err_analiza() );
+					cout << endl;
+					cout << "linia: " << I89D_nrLinii();
+					cout << endl;
+				}
+
+				break;
+
+			case ERR_analizaIn:
+
+				if( err != 1 ) {
+
+					cout << "[ReadIn]:" << err << " : ";
+					cout << readin_err( err ) << endl;
+
+				} else {
+
+					cout << "[analizaIn]:" << err << " : ";
+					cout << "Niew³a¶ciwy znak!";
+					cout << endl;
+				}
+
+				break;
+
+			case ERR_MakeCUT:
+
+				cout << "[MakeCUT]:" << err << " : ";
+				cout << MakeCut_err( err ) << endl;
+				cout << "linia: " << MakeCUT_err_linia();
+				cout << endl;
+				
+				break;
+		}
+		
+		err = 1;	
+	}
+
+	if( ustawienia.wait == 1 ) while(1);
+	
+//	delete ListaUkladow;
+//	if( err != 0 ) err = 1;
+	return err;
+} 

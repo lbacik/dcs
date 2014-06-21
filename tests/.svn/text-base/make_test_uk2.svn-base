@@ -1,0 +1,4 @@
+g++ -o test_uk test_uk.cc \
+	../ReadIn/readin.a \
+	../parser/parserISCAS89.a \
+	../libelectra/electra/uklad.a 

@@ -1,0 +1,45 @@
+#!/usr/local/bin/electra -f
+#
+#	uk³ad: FIXME
+#	
+#	Dla bramek and i xor po³±czonych wszystkimi wej¶ciami 
+#	z JEDNYM ¼ród³em sygna³u ( rozp³ywem ) electra poda niestety 
+#	nieprawid³owy wynik je¿eli na wej¶ciu pojawi sie "1" :(
+#
+#	Przeczytaj sekcjê "Zg³oszone b³êdy" na stronie 
+#	http://www.electra.webpark.pl
+#                 ______  
+#            *-->|      |
+#	     |	 |  OR  | 
+#    x0	-----*   |  AND |---> out
+#            |   |  XOR |
+#            *-->|______|
+#
+
+
+input(x0)
+output(g0,g1,g2)
+
+g0	=	or(x0,x0)
+g1	=	and(x0,x0)
+g2	=	xor(x0,x0)
+
+#
+#	Sposób na poradzenie sobie z b³êdem
+#
+#
+
+output(g3,g4,g5)
+
+nx0	=	not(x0)
+x0.0	=	not(nx0)
+x0.1	=	not(nx0)
+
+g3	=	or(x0.0,x0.1)
+g4	=	and(x0.0,x0.1)
+g5	=	xor(x0.0,x0.1)
+
+#
+#	Sprawd¼ dzia³anie poprzez:
+#	$electra -f fixme.bench -we "1"
+

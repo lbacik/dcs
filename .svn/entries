@@ -1,0 +1,103 @@
+8
+
+dir
+1
+svn://luka.org.pl/electra/trunk
+svn://luka.org.pl/electra
+
+
+
+2008-01-08T19:57:16.621056Z
+1
+luka
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+45ffb8d2-b9bb-4583-8dbb-eeaabf132488
+
+argIn
+dir
+
+gpl.txt
+file
+
+
+
+
+2008-01-09T19:11:19.000000Z
+0cce1e42ef3fb133940946534fcf8896
+2008-01-08T19:57:16.621056Z
+1
+luka
+
+ReadIn
+dir
+
+share
+dir
+
+tests
+dir
+
+electra.cc
+file
+
+
+
+
+2008-01-09T19:11:19.000000Z
+f391fdc5f25ee0783f337414ce2e32dd
+2008-01-08T19:57:16.621056Z
+1
+luka
+
+debug
+dir
+
+lib
+dir
+
+libelectra
+dir
+
+Makefile-win
+file
+
+
+
+
+2008-01-09T19:11:19.000000Z
+691b69eb6cfe19cef3be402602408964
+2008-01-08T19:57:16.621056Z
+1
+luka
+
+parser
+dir
+
+Makefile
+file
+
+
+
+
+2008-01-09T19:11:19.000000Z
+76d6aafd62b424defbbdc1a52ea483a0
+2008-01-08T19:57:16.621056Z
+1
+luka
+
+examples
+dir
+

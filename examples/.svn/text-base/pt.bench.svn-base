@@ -1,0 +1,26 @@
+#!/usr/local/bin/electra -f
+#
+#        przerzutnik typu T
+#
+#        +---------------------+
+#        |   _____      ____   |
+# 	 +->| XOR |--->|D  Q|--+
+#      X0-->|_____|    |____|
+#                      przerzutnik typu D
+#                        
+# 	wy¶ciem jest stan Q przerzutnika D
+#
+#
+#	Przerzutnik typu "T" zmienia stan ( na wyj¶ciu ) na przeciwny
+#	je¿eli na wej¶ciu pojawi siê "1".
+#
+#	sprawd¼:
+#	$electra -f pt.bench -we "0 1 0 1 0"
+
+
+INPUT(X0)
+OUTPUT(G1)
+
+G0=XOR(X0,G1)
+G1=DFF(G0)
+

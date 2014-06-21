@@ -1,0 +1,10 @@
+
+
+
+output( q0,q1,q2 )
+
+q0	=	dff( q2 )
+q1	=	dff( q0 )
+xor1	=	xor( q1, q2 )
+q2	=	dff( xor1 )
+

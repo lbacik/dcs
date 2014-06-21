@@ -1,0 +1,97 @@
+#!/usr/local/bin/electra -f
+#
+#	Transkoder 4 bitowy dla wy¶wietlacza 7-segmentowego.
+#
+#	belki ( segmenty ) wy¶wietlacza:
+#
+#        -- a --  	
+#       |       |	wyj¶cie uk³adu          segment
+#       f       b	      
+#       |       |	       s01                 a	
+#        -- g --               s02                 b
+#       |       |              s03                 c
+#       e       c              s04                 d
+#       |       |              s05                 e
+#        -- d --               s06                 f
+#                              s07                 g
+#
+#	Wej¶cia:
+#
+#		x0	najmniej znacz±cy bit
+#		...
+#		x3	najbardziej znacz±cy bit
+#
+#	/!\ UWAGA /!\  
+#			
+#	Wej¶cia s± odwrócone ( patrz definicja "input" ), tak wiêc nale¿y je 
+#	podawaæ w kolejno¶ci: 
+#			
+#				x3,x2,x1,x0
+#	
+#	czyli równowa¿nie z zapisem binarnym liczby!
+#	Np. je¿eli na wy¶wietlaczu ma zostaæ wy¶wietlona cyfra 2 to wej¶cie
+#	powinno wygl±daæ:
+#
+#				0010
+#
+#	A dla cyfry 7:		0111
+#
+#	----------------------------------------
+#
+#	Transkoder jest zrobiony wg innego pomys³u ni¿ ten do³±czony do 
+#	przyk³adów w wersjach electry od 0.1 do 0.1-91. 
+#
+#	Brakuje w tym rozwi±zaniu stanu wygaszaj±cego wszystkie belki
+#	- wg opisu wygaszenie mia³o by nast±piæ po podaniu na wej¶cia 
+#	samych jedynek, jednak nie nastêpuje... mo¿e to mój b³±d, albo 
+#	bug electry...
+#
+#	Wszystkie pozosta³e stany wyj¶ciowe zgadzaj± siê z opisem.
+#
+#	----------------------------------------
+#
+#	4 wej¶cia
+#	7 wyj¶æ
+#	35 bramek ( 4 not, 23 and, 1 xor, 7 or )
+
+input(x3,x2,x1,x0)
+output(s01,s02,s03,s04,s05,s06,s07)
+
+nx0	=	not(x0)
+nx1	=	not(x1)
+nx2	=	not(x2)
+nx3	=	not(x3)
+
+a01	=	and(nx0,nx1,nx2)
+a02	=	and(x0,nx1,x3)
+a03	=	and(x1,nx2,nx3)
+a04	=	and(x0,x2,nx3)
+a05	=	and(nx0,nx1)
+a06	=	and(nx2,nx3)
+a07	=	and(x0,x1,nx3)
+a08	=	and(x0,nx1,nx2)
+a09	=	and(x2,nx3)
+a10	=	and(x0,x1)
+a11	=	and(nx1,nx2)
+a12	=	and(nx0,nx2)
+a13	=	and(nx0,x1)
+a14	=	and(x1,nx2)
+a15	=	and(x0,nx1,x2)
+a16	=	and(nx0,x1)
+a17	=	and(nx0,nx2)
+a18	=	and(nx0,nx1)
+a19	=	and(nx1,x3)
+a20	=	and(nx1,x2)
+a21	=	and(nx0,x2)
+a22	=	and(nx0,x1)
+a23	=	and(nx2,x3)
+
+x01	=	xor(x1,x2)
+
+s01	=	or(a01,a02,a03,a04)
+s02	=	or(a05,a06,a07,a08)
+s03	=	or(a09,a10,a11)
+s04	=	or(a12,a13,a14,a15)
+s05	=	or(a16,a17)
+s06	=	or(a18,a19,a20,a21)
+s07	=	or(a22,a23,x01)

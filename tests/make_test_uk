@@ -1,0 +1,9 @@
+g++ -o test_uk test_uk.cc \
+	../share/bufor.o \
+	../ReadIn/readin.o \
+	../parser/iscas89rozbij.o \
+	../parser/parserISCAS89.o \
+	../libelectra/electra/uklad.o \
+	../libelectra/electra/elements.o \
+	../libelectra/electra/ukdbg.o \
+	../libelectra/MakeCUT.o

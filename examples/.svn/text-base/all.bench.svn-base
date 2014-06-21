@@ -1,0 +1,27 @@
+#!/usr/local/bin/electra -f
+#
+#	uk³ad prezentuj±cy dzia³anie elementów ( bramek oraz 
+#	przerzutnika typu "D" )zdefiniowanych w symulatorze.
+#	
+#	u¿yj:
+#	$electra -f all.bench -we "00 10 01 11"
+#	
+
+input(x0,x1)
+output(g0)	# not`
+output(g1)	# or
+output(g2)	# nor
+output(g3)	# and
+output(g4)	# nand
+output(g5)	# xor
+output(g6)	# xnor
+output(g7)	# dff ( przerzutnik typu "D" )
+
+g0	=	not(x0)
+g1	=	or(x0,x1)
+g2	=	nor(x0,x1)
+g3	=	and(x0,x1)
+g4	=	nand(x0,x1)
+g5	=	xor(x0,x1)
+g6	=	xnor(x0,x1)
+g7	=	dff(x0)

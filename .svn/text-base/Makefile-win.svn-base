@@ -1,0 +1,168 @@
+#
+# Oto mÛj pierwszy Makefile!!!!
+#
+# ===========================================================
+#
+# Makefile programu electra ver. 0.2-5, £ukasz Bacik 2004
+#
+# Testowane z programem make do≥πczonym do pakietu Dev-Cpp
+#
+
+
+# ==========================================================
+#
+#   DO ZMIANY W PRZYPADKU INNYCH åCIEØEK DO KOMPILATORA
+#   I èR”DE£ ELECTRY
+#
+
+# åcieøka do kompilatora
+CC=C:\Dev-Cpp\bin\g++
+
+# Flagi kompilacji
+CFLAGS= -IC:\Dev-Cpp\include\c++\backward \
+        -IC:\Dev-Cpp\include\c++ \
+        -IC:\Dev-Cpp\include \
+        -IC:\Dev-Cpp\include\c++\mingw32 \
+        -LD:\mgr\electra\warsztat\electra\lib
+
+
+
+# ==========================================================
+#
+#   NIE ZMIENIA∆
+#
+
+# åcieøki pomocnicze
+DIR_ELECTRA=libelectra/electra
+DIR_ELECTRA_API=libelectra
+DIR_PARSERS=parser
+
+DIR_LIB=lib
+#DIR_BIN=bin
+
+electra:		$(DIR_LIB)/readin.a \
+			$(DIR_LIB)/parsers.a \
+			$(DIR_LIB)/libelectra.a \
+			electra.cc
+
+	$(CC) $(CFLAGS) -o $@ electra.cc $(DIR_LIB)/readin.a $(DIR_LIB)/parsers.a \
+			$(DIR_LIB)/libelectra.a
+
+$(DIR_LIB)/libelectra.a: $(DIR_LIB)/uklad.o \
+			 $(DIR_LIB)/elements.o \
+			 $(DIR_LIB)/puklad.o \
+			 $(DIR_LIB)/ukdbg.o \
+			 $(DIR_LIB)/MakeCUT.o \
+			 $(DIR_LIB)/proapi.o
+	$(AR) rv $@ $?
+
+$(DIR_LIB)/uklad.o: 	share/temlista.h \
+			$(DIR_ELECTRA)/uklad.cc
+			
+	$(CC) $(CFLAGS) -o $(DIR_LIB)/uklad.o -c $(DIR_ELECTRA)/uklad.cc
+
+$(DIR_LIB)/elements.o: 	share/temlista.h \
+			$(DIR_ELECTRA)/uklad.cc \
+		      	$(DIR_ELECTRA)/elements.cc
+			
+	$(CC) $(CFLAGS) -o $(DIR_LIB)/elements.o -c $(DIR_ELECTRA)/elements.cc
+
+$(DIR_LIB)/puklad.o: 	share/temlista.h \
+			$(DIR_ELECTRA)/uklad.cc \
+			$(DIR_ELECTRA)/elements.cc \
+			$(DIR_ELECTRA)/puklad.cc
+			
+	$(CC) $(CFLAGS) -o $(DIR_LIB)/puklad.o -c $(DIR_ELECTRA)/puklad.cc
+	
+$(DIR_LIB)/ukdbg.o: 	share/temlista.h \
+			$(DIR_ELECTRA)/uklad.cc \
+			$(DIR_ELECTRA)/ukdbg.cc			
+			
+	$(CC) $(CFLAGS) -o $(DIR_LIB)/ukdbg.o -c $(DIR_ELECTRA)/ukdbg.cc
+
+$(DIR_LIB)/MakeCUT.o: 	share/temlista.h \
+			$(DIR_ELECTRA)/uklad.cc \
+		     	$(DIR_ELECTRA)/elements.cc \
+			$(DIR_ELECTRA_API)/MakeCUT.cc
+
+	$(CC) $(CFLAGS) -o $(DIR_LIB)/MakeCUT.o \
+			-c $(DIR_ELECTRA_API)/MakeCUT.cc
+
+$(DIR_LIB)/proapi.o:	share/temlista.h \
+			share/lfunc.cc \
+			$(DIR_ELECTRA)/uklad.cc \
+			$(DIR_ELECTRA)/puklad.cc \
+			$(DIR_ELECTRA_API)/proapi.cc
+			
+	$(CC) $(CFLAGS) -o $(DIR_LIB)/proapi.o \
+			-c $(DIR_ELECTRA_API)/proapi.cc
+
+#
+#	-------------------------------------------------------------
+#
+#				ReadIn
+#
+
+
+$(DIR_LIB)/readin.a:	$(DIR_LIB)/bufor.o \
+			$(DIR_LIB)/readin.o
+
+	$(AR) rv $@ $?
+
+$(DIR_LIB)/bufor.o:	share/bufor.cc
+
+	$(CC) $(CFLAGS) -o $@ -c share/bufor.cc
+
+$(DIR_LIB)/readin.o:	ReadIn/readin.cc
+
+	$(CC) $(CFLAGS) -o $@ -c ReadIn/readin.cc
+
+#
+#	-------------------------------------------------------------
+#
+#				Parsery
+#
+
+$(DIR_LIB)/parsers.a:	$(DIR_LIB)/lfunc.o \
+			$(DIR_LIB)/iscas89rozbij.o \
+			$(DIR_LIB)/insig.o \
+			$(DIR_LIB)/iscas89Dmg.o \
+			$(DIR_LIB)/parserISCAS89.o \
+			$(DIR_LIB)/parsers_dbg.o
+
+	$(AR) rv $@ $?
+
+$(DIR_LIB)/lfunc.o:	share/lfunc.cc
+
+	$(CC) $(CFLAGS) -o $(DIR_LIB)/lfunc.o -c share/lfunc.cc
+
+$(DIR_LIB)/iscas89rozbij.o:	share/temlista.h \
+				$(DIR_PARSERS)/iscas89rozbij.cc
+
+	$(CC) $(CFLAGS) -o $@ -c $(DIR_PARSERS)/iscas89rozbij.cc
+
+$(DIR_LIB)/insig.o:	share/temlista.h \
+			$(DIR_PARSERS)/insig.cc
+
+	$(CC) $(CFLAGS) -o $@ -c $(DIR_PARSERS)/insig.cc
+
+$(DIR_LIB)/iscas89Dmg.o:	share/temlista.h \
+				share/lfunc.cc \
+				$(DIR_PARSERS)/iscas89rozbij.cc \
+				$(DIR_PARSERS)/iscas89Dmg.cc
+
+	$(CC) $(CFLAGS) -o $@ -c $(DIR_PARSERS)/iscas89Dmg.cc
+
+$(DIR_LIB)/parserISCAS89.o:	share/temlista.h \
+				share/lfunc.cc \
+				$(DIR_PARSERS)/iscas89rozbij.cc \
+				$(DIR_PARSERS)/parserISCAS89.cc
+
+	$(CC) $(CFLAGS) -o $@ -c $(DIR_PARSERS)/parserISCAS89.cc
+
+$(DIR_LIB)/parsers_dbg.o:	share/temlista.h \
+				$(DIR_PARSERS)/debug.cc
+
+	$(CC) $(CFLAGS) -o $@ -c $(DIR_PARSERS)/debug.cc
+
+

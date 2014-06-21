@@ -1,0 +1,33 @@
+#
+# 7 bitowy rejestr inkrementuj±cy
+#	
+# 1 wej¶cie
+# 7 wyj¶æ
+# 7 przerzutników
+# 13 bramek ( 6 and, 7 xor )
+
+input	(x0)
+output	( q6,q5,q4,q3,q2,q1,q0 )
+
+q0	=	dff( xor0 )
+q1	=	dff( xor1 )
+q2	=	dff( xor2 )
+q3	=	dff( xor3 )
+q4	=	dff( xor4 )
+q5	=	dff( xor5 )
+q6	=	dff( xor6 )
+
+xor0	=	xor( x0,q0 )
+and0	=	and( x0,q0 )
+xor1	=	xor( and0,q1 )
+and1	=	and( and0,q1 )
+xor2	=	xor( and1,q2 )
+and2	=	and( and1,q2 )
+xor3	=	xor( and2,q3 )
+and3	=	and( and2,q3 )
+xor4	=	xor( and3,q4 )
+and4	=	and( and3,q4 )
+xor5	=	xor( and4,q5 )
+and5	=	and( and4,q5 )
+xor6	=	xor( and5,q6 )
+
